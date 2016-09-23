@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # restyaboard version
 ENV restyaboard_version=v0.2.1
+ENV restyaboard_repo=stepanorda/board
 
 # update & install package
 RUN apt-get update --yes
@@ -15,9 +16,17 @@ RUN echo "postfix postfix/mailname string example.com" | debconf-set-selections 
         && apt-get install -y postfix
 
 # deploy app
-RUN curl -L -o /tmp/restyaboard.zip https://github.com/RestyaPlatform/board/releases/download/${restyaboard_version}/board-${restyaboard_version}.zip \
-        && unzip /tmp/restyaboard.zip -d /usr/share/nginx/html \
-        && rm /tmp/restyaboard.zip
+#RUN curl -L -o /tmp/restyaboard.zip https://github.com/RestyaPlatform/board/releases/download/${restyaboard_version}/board-${restyaboard_version}.zip \
+#        && unzip /tmp/restyaboard.zip -d /usr/share/nginx/html \
+#        && rm /tmp/restyaboard.zip
+
+# additional packages neaded to build
+RUN apt-get install git npm && ln -s /usr/bin/nodejs /usr/bin/node \
+        && npm install grunt grunt-template-jasmine-istanbul grunt-contrib-jshint grunt-phplint grunt-contrib-less grunt-contrib-jst grunt-contrib-concat grunt-jsbeautifier grunt-prettify grunt-contrib-cssmin grunt-contrib-uglify grunt-filerev grunt-usemin grunt-contrib-htmlmin grunt-exec grunt-lineending grunt-regex-replace grunt-manifest grunt-zip grunt-contrib-jasmine grunt-plato grunt-complexity grunt-docco grunt-contrib-watch
+
+# deploy app from git
+RUN cd /usr/share/nginx/html && git clone https://github.com/${restyaboard_repo}.git . \
+        && grunt less && grunt jst
 
 # setting app
 WORKDIR /usr/share/nginx/html
